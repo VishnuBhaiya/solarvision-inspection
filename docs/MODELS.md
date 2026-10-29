@@ -1,7 +1,15 @@
 # Model availability
 
-The source and explicit simulation workflow are public. Original trained checkpoints were loaded and tested locally on a synthetic image, but they have not been uploaded publicly. A GitHub source link does not supply those weights.
+The original trained checkpoints are available without signing in from the [public model release](https://github.com/VishnuBhaiya/solarvision-inspection/releases/tag/model-weights-v1). Four distinct files total 449,615,296 bytes (449.6 MB). The SAHI configuration uses the same detector checkpoint as YOLO.
 
-Real inference requires optional inference dependencies plus the checkpoints at the relative paths in model-manifest.json. The manifest records the original sizes and SHA-256 digests for identity checks; it contains no model data. Supply compatible models you are authorised to use, or use the application's explicitly labelled simulation mode.
+From the repository root, run:
 
-The release download helper exits with an explanatory message while original release assets are unavailable. It does not substitute simulated detections for a real-model request.
+```bash
+python -m pip install -r requirements-inference.txt
+python scripts/download_models.py
+python app.py
+```
+
+The download helper verifies SHA-256 digests and installs the files at the relative paths in `model-manifest.json`, including both YOLO and SAHI destinations. Training is not required before inference. Existing files with matching hashes are reused.
+
+These research checkpoints were tested locally with YOLO, Faster R-CNN and SSD CPU inference on a synthetic image. This check does not establish accuracy on new inspection images. See [validation](VALIDATION.md) for limits. The application also offers an explicitly labelled simulation mode; a real-model request never silently substitutes simulated detections.

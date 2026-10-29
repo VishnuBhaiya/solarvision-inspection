@@ -22,7 +22,7 @@ for item in manifest["files"]:
             shutil.copyfileobj(response, output)
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
-            print("Original checkpoints are not published yet. See docs/MODELS.md; use explicit simulation or supply your own compatible checkpoints.", file=sys.stderr)
+            print("Checkpoint release asset is unavailable. See docs/MODELS.md and check the public release URL.", file=sys.stderr)
             raise SystemExit(2) from None
         raise
     if hashlib.sha256(temporary.read_bytes()).hexdigest() != item["sha256"]:
