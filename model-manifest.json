@@ -1,0 +1,35 @@
+{
+  "release": "model-weights-v1",
+  "files": [
+    {
+      "asset": "stage1_yolo.pt",
+      "destination": "models/stage1_yolo/best.pt",
+      "sha256": "c194ac729ccac301eff55c93e29cc48828d7cccee751ad6633c984ea0b00bfa9",
+      "size": 44039890
+    },
+    {
+      "asset": "yolov26.pt",
+      "destination": "models/yolov26/best.pt",
+      "sha256": "414994036f3d4ddfe88fbb4074d8283be6f1a7704e2ff0c1cf0c018e159b96ff",
+      "size": 44027474
+    },
+    {
+      "asset": "ssd.pth",
+      "destination": "models/ssd/best.pth",
+      "sha256": "4a763db2b916f3b5bc3fc6239a61797d1095a1bd09cd4b7826751a5c8dad9662",
+      "size": 31159443
+    },
+    {
+      "asset": "frcnn.pth",
+      "destination": "models/frcnn/best.pth",
+      "sha256": "15320bee157ed59ab0058e51e5ff1f989c0ae7efccabf7aca00d97d6810cafda",
+      "size": 330388489
+    },
+    {
+      "asset": "yolov26.pt",
+      "destination": "models/yolov26_sahi/best.pt",
+      "sha256": "414994036f3d4ddfe88fbb4074d8283be6f1a7704e2ff0c1cf0c018e159b96ff",
+      "size": 44027474
+    }
+  ]
+}

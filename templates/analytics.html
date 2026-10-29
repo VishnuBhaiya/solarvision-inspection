@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarVision — Analytics</title>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+<link rel="shortcut icon" href="/static/img/favicon.svg"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── INTEL BAR ─────────────────────────────────────────── -->
+  <header class="intel-bar" id="intelBar">
+    <div class="intel-brand">
+      <img src="/static/img/logo.svg" alt="logo" class="intel-logo"/>
+      <span class="intel-title">SUNSIGHT</span>
+    </div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">☀️</span><span id="ib-weather">17°C Sydney</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">📉</span><span>Lost</span><span id="ib-lost" class="intel-val amber">0 Wh</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔴</span><span>Critical</span><span id="ib-critical" class="intel-val red">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🏥</span><span>Farm Health</span><span id="ib-health" class="intel-val green">—</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔍</span><span>Scans</span><span id="ib-scans" class="intel-val">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🕐</span><span>Last</span><span id="ib-last" class="intel-val">—</span></div>
+    <div class="intel-spacer"></div>
+    <div class="intel-sim-pill" id="simPill">SIM MODE</div>
+  </header>
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="logo" class="sidebar-logo"/>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">SolarVision</span>
+          <span class="sidebar-sub">AI Solar Intelligence Suite</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse">&#8592;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">NAVIGATION</div>
+      <a class="nav-item" href="/"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a class="nav-item" href="/panel#inspection"><span class="nav-icon">🔍</span><span class="nav-label">New Inspection</span></a>
+      <a class="nav-item" href="/panel#video"><span class="nav-icon">🎬</span><span class="nav-label">Drone Video</span></a>
+      <a class="nav-item" href="/panel#tello"><span class="nav-icon">🚁</span><span class="nav-label">Live Tello</span></a>
+      <a class="nav-item" href="/#results"><span class="nav-icon">📋</span><span class="nav-label">Results</span></a>
+      <a class="nav-item" href="/report"><span class="nav-icon">📄</span><span class="nav-label">Report</span></a>
+      <a class="nav-item" href="/#farm"><span class="nav-icon">🏘️</span><span class="nav-label">Farm Overview</span></a>
+      <a class="nav-item active" href="/analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></a>
+      <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span><span class="nav-label">Schedule</span></a>
+      <a class="nav-item" href="/workorders"><span class="nav-icon">🔧</span><span class="nav-label">Work Orders</span></a>
+    </nav>
+    <div class="sidebar-session">
+      <div class="nav-section-label">SESSION</div>
+      <div class="session-row"><span>Inspections</span><span id="ss-inspections">0</span></div>
+      <div class="session-row"><span>Defects Found</span><span id="ss-defects">0</span></div>
+      <div class="session-row"><span>Panels Scanned</span><span id="ss-panels">0</span></div>
+      <div class="session-row"><span>Model</span><span id="ss-model" class="session-model-pill">YOLOv26</span></div>
+    </div>
+    <div class="sidebar-actions">
+      <div class="nav-section-label">ACTIONS</div>
+      <button class="action-btn" onclick="window.location='/api/export/csv'"><span>📥</span><span class="nav-label">Export CSV</span></button>
+      <button class="action-btn" onclick="window.location='/report'"><span>📄</span><span class="nav-label">Generate Report</span></button>
+      <button class="action-btn danger" onclick="Analytics.resetSession()"><span>🔄</span><span class="nav-label">Reset Session</span></button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────────────── -->
+  <main class="main-content" id="mainContent">
+    <section class="page active" id="page-analytics">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">ANALYTICS</div>
+          <h1 class="page-title">Analytics &amp; Trends</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline" onclick="Analytics.refresh()">↻ Refresh</button>
+          <button class="btn-outline" onclick="AppPrint.printPage()">🖨️ Print</button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Row -->
+      <div class="kpi-row" id="analyticsKpiRow">
+        <div class="kpi-card">
+          <div class="kpi-icon">🔍</div>
+          <div class="kpi-label">Total Scans</div>
+          <div class="kpi-value" id="an-scans">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🏥</div>
+          <div class="kpi-label">Avg Health</div>
+          <div class="kpi-value" id="an-health">—</div>
+          <div class="kpi-unit">/100</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🔎</div>
+          <div class="kpi-label">Total Defects</div>
+          <div class="kpi-value" id="an-defects">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-label">Total Energy Lost</div>
+          <div class="kpi-value" id="an-energy">0</div>
+          <div class="kpi-unit">Wh</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-label">Critical Panels</div>
+          <div class="kpi-value red" id="an-critical">0</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: Health Score Trend (full width) -->
+      <div class="card analytics-full-card">
+        <div class="card-title">
+          📈 Health Score Trend
+          <span class="card-subtitle">Health score per inspection over time</span>
+        </div>
+        <div class="chart-wrap-lg">
+          <canvas id="healthTrendChart"></canvas>
+        </div>
+        <div id="healthTrendEmpty" class="chart-empty-state">
+          Run inspections to see health trend data
+        </div>
+      </div>
+
+      <!-- ROW 2: Defect Frequency + Energy Loss Timeline -->
+      <div class="analytics-row-2">
+        <div class="card">
+          <div class="card-title">
+            🔎 Defect Frequency
+            <span class="card-subtitle">Occurrences per defect class</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="defectFreqChart"></canvas>
+          </div>
+          <div id="defectFreqEmpty" class="chart-empty-state">
+            No defect data yet
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            ⚡ Energy Loss Timeline
+            <span class="card-subtitle">Wh lost per inspection</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="energyTimelineChart"></canvas>
+          </div>
+          <div id="energyTimelineEmpty" class="chart-empty-state">
+            No energy data yet
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Confidence Distribution + ROI Calculator -->
+      <div class="analytics-row-2">
+        <div class="card">
+          <div class="card-title">
+            📉 Confidence Distribution
+            <span class="card-subtitle">Detection confidence histogram</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="confHistChart"></canvas>
+          </div>
+          <div id="confHistEmpty" class="chart-empty-state">
+            No confidence data yet
+          </div>
+        </div>
+
+        <!-- ROI Calculator -->
+        <div class="card roi-calculator-card">
+          <div class="card-title">💰 ROI Calculator</div>
+          <div class="roi-inputs">
+            <div class="form-group">
+              <label class="form-label">Energy Price (AUD/kWh)</label>
+              <input type="number" class="form-input" id="roiPrice"
+                     value="0.28" step="0.01" min="0.01"
+                     oninput="Analytics.calcROI()"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Daily Energy Loss (Wh)</label>
+              <input type="number" class="form-input" id="roiDailyLoss"
+                     value="0" step="1" min="0"
+                     oninput="Analytics.calcROI()"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cleaning Cost (AUD)</label>
+              <input type="number" class="form-input" id="roiCleanCost"
+                     value="45" step="1" min="0"
+                     oninput="Analytics.calcROI()"/>
+            </div>
+          </div>
+          <div class="roi-divider"></div>
+          <div class="roi-results">
+            <div class="roi-result-item">
+              <span class="roi-label">Daily Loss (kWh)</span>
+              <span class="roi-val" id="roi-daily-kwh">0.000</span>
+            </div>
+            <div class="roi-result-item">
+              <span class="roi-label">Annual Loss (AUD)</span>
+              <span class="roi-val amber" id="roi-annual">$0.00</span>
+            </div>
+            <div class="roi-result-item">
+              <span class="roi-label">Loss per Hour (AUD)</span>
+              <span class="roi-val" id="roi-per-hr">$0.0000</span>
+            </div>
+            <div class="roi-result-item">
+              <span class="roi-label">Est. Payback</span>
+              <span class="roi-val green" id="roi-payback">— days</span>
+            </div>
+          </div>
+          <button class="btn-amber btn-full" style="margin-top:1rem"
+                  onclick="Analytics.calcROI()">
+            ⟳ Recalculate
+          </button>
+        </div>
+      </div>
+
+      <!-- ROW 4: Model Performance Table (full width) -->
+      <div class="card analytics-full-card">
+        <div class="card-title">🤖 Model Performance Comparison</div>
+        <div class="table-wrap">
+          <table class="data-table model-compare-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Badge</th>
+                <th>Speed</th>
+                <th>Accuracy</th>
+                <th>Best For</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="model-row-active">
+                <td><strong>⚡ YOLOv26</strong></td>
+                <td><span class="model-badge fast">FAST</span></td>
+                <td><span class="speed-bar fast-bar">████████░░</span> Fast</td>
+                <td><span class="acc-bar">███████░░░</span> Good</td>
+                <td>Real-time drone feed</td>
+                <td><span class="status-pill available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>🎯 Faster R-CNN</strong></td>
+                <td><span class="model-badge accurate">ACCURATE</span></td>
+                <td><span class="speed-bar slow-bar">████░░░░░░</span> Slow</td>
+                <td><span class="acc-bar">██████████</span> Highest</td>
+                <td>Detailed inspection</td>
+                <td><span class="status-pill available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>🛡️ SSD</strong></td>
+                <td><span class="model-badge balanced">BALANCED</span></td>
+                <td><span class="speed-bar med-bar">██████░░░░</span> Medium</td>
+                <td><span class="acc-bar">██████░░░░</span> Medium</td>
+                <td>Balanced workloads</td>
+                <td><span class="status-pill available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>🔬 YOLOv26 + SAHI</strong></td>
+                <td><span class="model-badge precise">PRECISE</span></td>
+                <td><span class="speed-bar slow-bar">███░░░░░░░</span> Slow</td>
+                <td><span class="acc-bar">██████████</span> Highest</td>
+                <td>Small defects, hi-res imagery</td>
+                <td><span class="status-pill available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>🔮 Auto Select</strong></td>
+                <td><span class="model-badge auto">AUTO</span></td>
+                <td>—</td>
+                <td>—</td>
+                <td>Uses best available model</td>
+                <td><span class="status-pill available">Available</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ROW 5: Defect Priority Breakdown + Panel Health Distribution -->
+      <div class="analytics-row-2">
+        <div class="card">
+          <div class="card-title">
+            🚨 Priority Breakdown
+            <span class="card-subtitle">Defects by severity level</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="priorityDonutChart"></canvas>
+          </div>
+          <div id="priorityDonutEmpty" class="chart-empty-state">
+            No priority data yet
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            📊 Panel Health Distribution
+            <span class="card-subtitle">Panels grouped by health band</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="panelHealthDistChart"></canvas>
+          </div>
+          <div id="panelHealthDistEmpty" class="chart-empty-state">
+            No panel data yet
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ── HISTORY BAR ───────────────────────────────────────── -->
+  <footer class="history-bar" id="historyBar">
+    <span class="history-label">History</span>
+    <div class="history-chips" id="historyChips">
+      <span class="history-empty">No inspections yet</span>
+    </div>
+  </footer>
+
+</div><!-- end shell -->
+
+<!-- Confirm reset modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header"><h3>⚠️ Confirm Reset</h3></div>
+    <div class="modal-body">
+      <p>This will delete all inspections, results, and work orders.</p>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" onclick="Analytics.confirmReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  // Init analytics on load
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof AnalyticsPage !== 'undefined') AnalyticsPage.init();
+    else if(typeof Analytics !== 'undefined') Analytics.init();
+  });
+</script>
+</body>
+</html>

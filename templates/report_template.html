@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarVision — Inspection Report</title>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+<link rel="shortcut icon" href="/static/img/favicon.svg"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<link rel="stylesheet" href="/static/css/report.css?v=report-print-roi-1"/>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- INTEL BAR -->
+  <header class="intel-bar" id="intelBar">
+    <div class="intel-brand">
+      <img src="/static/img/logo.svg" alt="logo" class="intel-logo"/>
+      <span class="intel-title">SOLARVISION</span>
+    </div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">☀️</span><span id="ib-weather">17°C Sydney</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">📉</span><span>Lost</span><span id="ib-lost" class="intel-val amber">0 Wh</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔴</span><span>Critical</span><span id="ib-critical" class="intel-val red">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🏥</span><span>Farm Health</span><span id="ib-health" class="intel-val green">—</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔍</span><span>Scans</span><span id="ib-scans" class="intel-val">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🕐</span><span>Last</span><span id="ib-last" class="intel-val">—</span></div>
+    <div class="intel-spacer"></div>
+    <div class="intel-sim-pill" id="simPill">SIM MODE</div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="logo" class="sidebar-logo"/>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">SolarVision</span>
+          <span class="sidebar-sub">AI Solar Intelligence Suite</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse">&#8592;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">NAVIGATION</div>
+      <a class="nav-item" href="/"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a class="nav-item" href="/panel#inspection"><span class="nav-icon">🔍</span><span class="nav-label">New Inspection</span></a>
+      <a class="nav-item" href="/panel#video"><span class="nav-icon">🎬</span><span class="nav-label">Drone Video</span></a>
+      <a class="nav-item" href="/panel#tello"><span class="nav-icon">🚁</span><span class="nav-label">Live Tello</span></a>
+      <a class="nav-item" href="/#results"><span class="nav-icon">📋</span><span class="nav-label">Results</span></a>
+      <a class="nav-item active" href="/report"><span class="nav-icon">📄</span><span class="nav-label">Report</span></a>
+      <a class="nav-item" href="/#farm"><span class="nav-icon">🏘️</span><span class="nav-label">Farm Overview</span></a>
+      <a class="nav-item" href="/analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></a>
+      <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span><span class="nav-label">Schedule</span></a>
+      <a class="nav-item" href="/workorders"><span class="nav-icon">🔧</span><span class="nav-label">Work Orders</span></a>
+    </nav>
+    <div class="sidebar-session">
+      <div class="nav-section-label">SESSION</div>
+      <div class="session-row"><span>Inspections</span><span id="ss-inspections">0</span></div>
+      <div class="session-row"><span>Defects Found</span><span id="ss-defects">0</span></div>
+      <div class="session-row"><span>Panels Scanned</span><span id="ss-panels">0</span></div>
+      <div class="session-row"><span>Model</span><span id="ss-model" class="session-model-pill">YOLOv26</span></div>
+    </div>
+    <div class="sidebar-actions">
+      <div class="nav-section-label">ACTIONS</div>
+      <button class="action-btn" onclick="window.location='/api/export/csv'"><span>📥</span><span class="nav-label">Export CSV</span></button>
+      <button class="action-btn" onclick="ReportPage.generate()"><span>📄</span><span class="nav-label">Generate Report</span></button>
+      <button class="action-btn danger" onclick="ReportPage.resetSession()"><span>🔄</span><span class="nav-label">Reset Session</span></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mainContent">
+    <section class="page active" id="page-report">
+
+      <!-- Page Header -->
+      <div class="page-header no-print">
+        <div>
+          <div class="page-eyebrow">REPORT</div>
+          <h1 class="page-title">Inspection Report</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn-amber" id="btnGenerateReport" onclick="ReportPage.generate()">
+            🔄 Generate Report
+          </button>
+          <button class="btn-outline" onclick="ReportPage.printReport()">
+            🖨️ Print / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel selector (multi-panel support) -->
+      <div class="report-panel-selector no-print" id="reportPanelSelector" style="display:none">
+        <div class="card">
+          <div class="card-title">🔲 Select Panel</div>
+          <div class="panel-selector-chips" id="panelSelectorChips"></div>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div id="reportEmptyState" class="report-empty-state">
+        <div class="report-empty-icon">📄</div>
+        <h2>No Report Yet</h2>
+        <p>Run an inspection first, then click <strong>Generate Report</strong></p>
+        <button class="btn-amber" onclick="window.location='/panel#inspection'">
+          🔍 Run Inspection
+        </button>
+      </div>
+
+      <!-- REPORT CONTENT (hidden until generated) -->
+      <div id="reportContent" class="report-content" style="display:none">
+
+        <!-- ── PRINT HEADER (visible only on print) ── -->
+        <div class="report-print-header print-only">
+          <img src="/static/img/logo.svg" alt="SolarVision" class="report-print-logo"/>
+          <div class="report-print-title">
+            <h1>SolarVision — Solar Panel Inspection Report</h1>
+            <p>AI Solar Intelligence Suite &nbsp;|&nbsp; Confidential</p>
+          </div>
+        </div>
+
+        <!-- ── REPORT HEADER CARD ── -->
+        <div class="report-header-card">
+          <div class="report-meta-row">
+            <div class="report-meta-item">
+              <span class="report-meta-label">Panel ID</span>
+              <span class="report-meta-val" id="rep-panelId">—</span>
+            </div>
+            <div class="report-meta-item">
+              <span class="report-meta-label">Date</span>
+              <span class="report-meta-val" id="rep-date">—</span>
+            </div>
+            <div class="report-meta-item">
+              <span class="report-meta-label">Model</span>
+              <span class="report-meta-val" id="rep-model">—</span>
+            </div>
+            <div class="report-meta-item">
+              <span class="report-meta-label">Location</span>
+              <span class="report-meta-val" id="rep-location">—</span>
+            </div>
+            <div class="report-meta-item">
+              <span class="report-meta-label">Mode</span>
+              <span class="report-meta-val sim-badge-sm" id="rep-mode">SIM MODE</span>
+            </div>
+          </div>
+          <div class="report-health-bar-wrap">
+            <div class="report-health-bar">
+              <div class="report-health-fill" id="repHealthFill" style="width:0%"></div>
+            </div>
+            <div class="report-health-score">
+              <span id="rep-healthVal">—</span>
+              <span class="report-health-denom">/100</span>
+              <span class="report-health-label" id="rep-healthLabel">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ROW 1: AI Narrative + Annotated Image ── -->
+        <div class="report-row-2">
+          <div class="card report-nlp-card">
+            <div class="card-title">📝 AI Inspection Narrative</div>
+            <div id="rep-nlpText" class="report-nlp-text"></div>
+            <div class="report-nlp-footer">
+              <button class="btn-copy no-print" onclick="ReportPage.copyNLP()">📋 Copy</button>
+              <span class="report-gen-by">Generated by SolarVision AI</span>
+            </div>
+          </div>
+          <div class="card report-image-card">
+            <div class="card-title">🖼️ Annotated Image</div>
+            <div class="report-image-wrap">
+              <img id="rep-annotatedImg" class="report-annotated-img" alt="Annotated inspection" style="display:none"/>
+              <div id="rep-noImage" class="report-no-image">
+                <span>No image available</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ROW 2: ROI Analysis ── -->
+        <div class="card report-roi-card">
+          <div class="card-title">💰 ROI Analysis</div>
+          <div class="roi-grid">
+            <div class="roi-block">
+              <div class="roi-block-icon">⚡</div>
+              <div class="roi-block-label">Energy Loss / Cycle</div>
+              <div class="roi-block-val" id="rep-energyLoss">— Wh</div>
+            </div>
+            <div class="roi-block">
+              <div class="roi-block-icon">💵</div>
+              <div class="roi-block-label">Avg Loss / Hour</div>
+              <div class="roi-block-val amber" id="rep-lossHr">$—</div>
+            </div>
+            <div class="roi-block">
+              <div class="roi-block-icon">📅</div>
+              <div class="roi-block-label">Est. Annual Loss</div>
+              <div class="roi-block-val red" id="rep-annualLoss">$—</div>
+            </div>
+            <div class="roi-block">
+              <div class="roi-block-icon">🧹</div>
+              <div class="roi-block-label">Clean Cost (AUD)</div>
+              <div class="roi-block-val" id="rep-cleanCost">$—</div>
+            </div>
+            <div class="roi-block">
+              <div class="roi-block-icon">🔄</div>
+              <div class="roi-block-label">Cleaning Payback</div>
+              <div class="roi-block-val green" id="rep-payback">— days</div>
+            </div>
+            <div class="roi-block">
+              <div class="roi-block-icon">📆</div>
+              <div class="roi-block-label">Recommended Clean</div>
+              <div class="roi-block-val" id="rep-cleanDate">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ROW 3: Detections Table ── -->
+        <div class="card">
+          <div class="card-title">
+            🔍 Detected Defects
+            <span class="badge" id="rep-defectCount">0</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="rep-detectionsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Class</th>
+                  <th>Confidence</th>
+                  <th>Priority</th>
+                  <th>Bounding Box</th>
+                </tr>
+              </thead>
+              <tbody id="rep-detectionsBody">
+                <tr><td colspan="5" class="table-empty">No defects detected</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── ROW 4: Per-Panel Summary ── -->
+        <div class="card">
+          <div class="card-title">🔲 Per-Panel Summary</div>
+          <div class="table-wrap">
+            <table class="data-table" id="rep-panelTable">
+              <thead>
+                <tr>
+                  <th>Panel ID</th>
+                  <th>Health Score</th>
+                  <th>Health Label</th>
+                  <th>Soiling %</th>
+                  <th>Energy Lost (Wh)</th>
+                  <th>Defects</th>
+                  <th>Recommended Clean</th>
+                  <th>Days Until</th>
+                </tr>
+              </thead>
+              <tbody id="rep-panelBody">
+                <tr><td colspan="8" class="table-empty">No panel data</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── ROW 5: All Panels Report (full session) ── -->
+        <div class="card" id="rep-allPanelsCard" style="display:none">
+          <div class="card-title">
+            📋 Full Session Report
+            <span class="badge" id="rep-allPanelCount">0</span>
+          </div>
+          <div id="rep-allPanelsBody" class="all-panels-body"></div>
+        </div>
+
+        <!-- ── REPORT FOOTER ── -->
+        <div class="report-footer">
+          <div class="report-footer-left">
+            <img src="/static/img/logo.svg" alt="logo" class="report-footer-logo"/>
+            <span>SolarVision — AI Solar Intelligence Suite</span>
+          </div>
+          <div class="report-footer-right">
+            <span id="rep-footerDate">—</span>
+            &nbsp;|&nbsp; Confidential &nbsp;|&nbsp; For internal use only
+          </div>
+        </div>
+
+      </div><!-- end reportContent -->
+
+    </section>
+  </main>
+
+  <!-- HISTORY BAR -->
+  <footer class="history-bar" id="historyBar">
+    <span class="history-label">History</span>
+    <div class="history-chips" id="historyChips">
+      <span class="history-empty">No inspections yet</span>
+    </div>
+  </footer>
+
+</div><!-- end shell -->
+
+<!-- Confirm reset modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header"><h3>⚠️ Confirm Reset</h3></div>
+    <div class="modal-body">
+      <p>This will delete all inspections and work orders.</p>
+      <div class="modal-footer">
+        <button class="btn-outline"
+          onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" onclick="ReportPage.confirmReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/pdf-export.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof ReportPage !== 'undefined') ReportPage.init();
+  });
+</script>
+</body>
+</html>

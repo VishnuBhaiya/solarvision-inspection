@@ -1,0 +1,6 @@
+-r requirements.txt
+torch>=2.2
+torchvision>=0.17
+ultralytics>=8.3
+sahi>=0.11.19
+opencv-python>=4.9

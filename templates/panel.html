@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarVision — Panel Inspection</title>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+<link rel="shortcut icon" href="/static/img/favicon.svg"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ── INTEL BAR ─────────────────────────────────────────── -->
+  <header class="intel-bar" id="intelBar">
+    <div class="intel-brand">
+      <img src="/static/img/logo.svg" alt="logo" class="intel-logo"/>
+      <span class="intel-title">SUNSIGHT</span>
+    </div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">☀️</span><span id="ib-weather">17°C Sydney</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">📉</span><span>Lost</span><span id="ib-lost" class="intel-val amber">0 Wh</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔴</span><span>Critical</span><span id="ib-critical" class="intel-val red">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🏥</span><span>Farm Health</span><span id="ib-health" class="intel-val green">—</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔍</span><span>Scans</span><span id="ib-scans" class="intel-val">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🕐</span><span>Last</span><span id="ib-last" class="intel-val">—</span></div>
+    <div class="intel-spacer"></div>
+    <div class="intel-sim-pill" id="simPill">SIM MODE</div>
+  </header>
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="logo" class="sidebar-logo"/>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">SolarVision</span>
+          <span class="sidebar-sub">AI Solar Intelligence Suite</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse">&#8592;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">NAVIGATION</div>
+      <a class="nav-item" href="/" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a class="nav-item active" href="/panel#inspection" data-page="inspection"><span class="nav-icon">🔍</span><span class="nav-label">New Inspection</span></a>
+      <a class="nav-item" href="/panel#video" data-page="video"><span class="nav-icon">🎬</span><span class="nav-label">Drone Video</span></a>
+      <a class="nav-item" href="/panel#tello" data-page="tello"><span class="nav-icon">🚁</span><span class="nav-label">Live Tello</span></a>
+      <a class="nav-item" href="/#results"><span class="nav-icon">📋</span><span class="nav-label">Results</span><span class="nav-badge" id="resultsBadge" style="display:none">0</span></a>
+      <a class="nav-item" href="/report"><span class="nav-icon">📄</span><span class="nav-label">Report</span></a>
+      <a class="nav-item" href="/#farm"><span class="nav-icon">🏘️</span><span class="nav-label">Farm Overview</span></a>
+      <a class="nav-item" href="/analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></a>
+      <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span><span class="nav-label">Schedule</span></a>
+      <a class="nav-item" href="/workorders"><span class="nav-icon">🔧</span><span class="nav-label">Work Orders</span></a>
+    </nav>
+    <div class="sidebar-session">
+      <div class="nav-section-label">SESSION</div>
+      <div class="session-row"><span>Inspections</span><span id="ss-inspections">0</span></div>
+      <div class="session-row"><span>Defects Found</span><span id="ss-defects">0</span></div>
+      <div class="session-row"><span>Panels Scanned</span><span id="ss-panels">0</span></div>
+      <div class="session-row"><span>Model</span><span id="ss-model" class="session-model-pill">YOLOv26</span></div>
+    </div>
+    <div class="sidebar-actions">
+      <div class="nav-section-label">ACTIONS</div>
+      <button class="action-btn" onclick="window.location='/api/export/csv'"><span>📥</span><span class="nav-label">Export CSV</span></button>
+      <button class="action-btn" onclick="window.location='/report'"><span>📄</span><span class="nav-label">Generate Report</span></button>
+      <button class="action-btn danger" onclick="PanelApp.resetSession()"><span>🔄</span><span class="nav-label">Reset Session</span></button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────────────── -->
+  <main class="main-content" id="mainContent">
+
+    <!-- ════════════════════════════════════════════
+         PAGE: NEW INSPECTION
+    ════════════════════════════════════════════ -->
+    <section class="page active" id="page-inspection">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">NEW PANEL INSPECTION</div>
+          <h1 class="page-title">New Inspection</h1>
+        </div>
+        <div class="page-actions">
+          <div class="sim-badge" id="inspSimBadge">● SIM MODE</div>
+        </div>
+      </div>
+
+      <div class="insp-layout">
+        <!-- LEFT COLUMN -->
+        <div class="insp-left">
+
+          <!-- Upload Zone -->
+          <div class="card">
+            <div class="card-title">📁 Upload Image</div>
+            <div class="drop-zone" id="imageDropZone"
+                 ondragover="PanelApp.onDragOver(event)"
+                 ondragleave="PanelApp.onDragLeave(event)"
+                 ondrop="PanelApp.onDropImage(event)"
+                 onclick="document.getElementById('imageFileInput').click()">
+              <div class="drop-zone-inner" id="imageDropInner">
+                <img src="/static/assets/placeholder.svg" class="drop-icon" alt="drone"/>
+                <p class="drop-title">Drop image here or click to browse</p>
+                <p class="drop-sub">JPG · PNG · BMP · TIFF · WebP — max 200MB</p>
+              </div>
+              <img id="imagePreview" class="image-preview" style="display:none" alt="preview"/>
+            </div>
+            <input type="file" id="imageFileInput" accept=".jpg,.jpeg,.png,.bmp,.tiff,.webp"
+                   style="display:none" onchange="PanelApp.onImageSelect(event)"/>
+          </div>
+
+          <!-- Pipeline -->
+          <div class="card pipeline-card">
+            <div class="card-title">
+              ⚙️ Pipeline
+              <span class="pipeline-status-badge" id="pipelineStatus">READY</span>
+            </div>
+            <div class="pipeline-steps" id="pipelineSteps">
+              <div class="pipe-step" data-step="1"><div class="pipe-dot"></div><div class="pipe-label">Upload</div></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step" data-step="2"><div class="pipe-dot"></div><div class="pipe-label">Stage 1</div></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step" data-step="3"><div class="pipe-dot"></div><div class="pipe-label">Stage 2</div></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step" data-step="4"><div class="pipe-dot"></div><div class="pipe-label">NLP</div></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step" data-step="5"><div class="pipe-dot"></div><div class="pipe-label">ROI</div></div>
+              <div class="pipe-arrow">→</div>
+              <div class="pipe-step" data-step="6"><div class="pipe-dot"></div><div class="pipe-label">Done</div></div>
+            </div>
+            <div class="log-terminal" id="inspLog">
+              <div class="log-line"><span class="log-time">--:--:--</span><span class="log-tag sys">[SYSTEM]</span><span class="log-msg"> Ready. Upload an image to begin.</span></div>
+            </div>
+          </div>
+
+          <!-- Run Button -->
+          <button class="btn-amber btn-full" id="btnRunInspection" onclick="PanelApp.runInspection()">
+            🔍 Run Inspection
+          </button>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="insp-right">
+
+          <!-- AI Model Selector -->
+          <div class="card">
+            <div class="card-title">🤖 AI Model</div>
+            <div class="model-selector" id="modelSelector">
+              <label class="model-option selected" data-model="yolov26">
+                <input type="radio" name="model" value="yolov26" checked/>
+                <div class="model-card-inner">
+                  <span class="model-icon">⚡</span>
+                  <div class="model-info">
+                    <span class="model-name">YOLOv26</span>
+                    <span class="model-desc">Fast real-time detection</span>
+                  </div>
+                  <span class="model-badge fast">FAST</span>
+                </div>
+              </label>
+              <label class="model-option" data-model="frcnn">
+                <input type="radio" name="model" value="frcnn"/>
+                <div class="model-card-inner">
+                  <span class="model-icon">🎯</span>
+                  <div class="model-info">
+                    <span class="model-name">Faster R-CNN</span>
+                    <span class="model-desc">High accuracy inspection</span>
+                  </div>
+                  <span class="model-badge accurate">ACCURATE</span>
+                </div>
+              </label>
+              <label class="model-option" data-model="ssd">
+                <input type="radio" name="model" value="ssd"/>
+                <div class="model-card-inner">
+                  <span class="model-icon">🛡️</span>
+                  <div class="model-info">
+                    <span class="model-name">SSD</span>
+                    <span class="model-desc">Balanced speed &amp; accuracy</span>
+                  </div>
+                  <span class="model-badge balanced">BALANCED</span>
+                </div>
+              </label>
+              <label class="model-option" data-model="yolov26_sahi">
+                <input type="radio" name="model" value="yolov26_sahi"/>
+                <div class="model-card-inner">
+                  <span class="model-icon">🔬</span>
+                  <div class="model-info">
+                    <span class="model-name">YOLOv26 + SAHI</span>
+                    <span class="model-desc">Small defect boost — sliced inference</span>
+                  </div>
+                  <span class="model-badge precise">PRECISE</span>
+                </div>
+              </label>
+              <label class="model-option" data-model="auto">
+                <input type="radio" name="model" value="auto"/>
+                <div class="model-card-inner">
+                  <span class="model-icon">🔮</span>
+                  <div class="model-info">
+                    <span class="model-name">Auto Select</span>
+                    <span class="model-desc">Uses best available model</span>
+                  </div>
+                  <span class="model-badge auto">AUTO</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Panel ID -->
+          <div class="card">
+            <div class="card-title">🏷️ Panel ID</div>
+            <input type="text" class="form-input" id="panelIdInput" value="P01" placeholder="e.g. P01"/>
+            <p class="form-hint">Auto-increments after each scan</p>
+          </div>
+
+          <!-- Confidence Slider -->
+          <div class="card">
+            <div class="card-title">🎚️ Confidence Threshold</div>
+            <div class="slider-row">
+              <span class="slider-min">0.05</span>
+              <input type="range" class="conf-slider" id="confSlider"
+                     min="0.05" max="0.95" step="0.05" value="0.25"
+                     oninput="PanelApp.onConfChange(this.value)"/>
+              <span class="slider-max">0.95</span>
+            </div>
+            <div class="slider-val-display">
+              Min confidence: <strong id="confVal">0.25</strong>
+            </div>
+          </div>
+
+          <!-- Location Tag -->
+          <div class="card">
+            <div class="card-title">📍 Location Tag</div>
+            <input type="text" class="form-input" id="locationInput" placeholder="e.g. Zone A, Row 3"/>
+          </div>
+
+          <!-- Last Result -->
+          <div class="card" id="lastResultCard">
+            <div class="card-title">✅ Last Result</div>
+            <div id="lastResultBody" class="last-result-body">
+              <span class="empty-state-mini">No inspections yet</span>
+            </div>
+          </div>
+
+          <!-- History -->
+          <div class="card">
+            <div class="card-title">📜 History</div>
+            <div id="inspHistoryList" class="insp-history-list">
+              <span class="empty-state-mini">No inspections yet</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         PAGE: DRONE VIDEO
+    ════════════════════════════════════════════ -->
+    <section class="page" id="page-video">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">DRONE VIDEO</div>
+          <h1 class="page-title">Video Inspection</h1>
+        </div>
+        <div class="page-actions">
+          <div class="sim-badge">● SIM MODE</div>
+          <button class="btn-amber" id="btnAnalyzeVideo" onclick="PanelApp.analyzeVideo()">🎬 Analyze Video</button>
+        </div>
+      </div>
+
+      <div class="video-layout">
+        <!-- LEFT -->
+        <div class="video-left">
+          <div class="card">
+            <div class="card-title">🎬 Upload Drone Video</div>
+            <div class="drop-zone" id="videoDropZone"
+                 ondragover="PanelApp.onDragOver(event)"
+                 ondragleave="PanelApp.onDragLeave(event)"
+                 ondrop="PanelApp.onDropVideo(event)"
+                 onclick="document.getElementById('videoFileInput').click()">
+              <div class="drop-zone-inner" id="videoDropInner">
+                <div class="drop-icon-text">🎥</div>
+                <p class="drop-title">Drop video here or click to browse</p>
+                <p class="drop-sub">MP4 · AVI · MOV · MKV — max 200MB</p>
+              </div>
+              <video id="videoPreview" class="video-preview" controls style="display:none"></video>
+            </div>
+            <input type="file" id="videoFileInput" accept=".mp4,.avi,.mov,.mkv"
+                   style="display:none" onchange="PanelApp.onVideoSelect(event)"/>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🎞️ Frame Analysis</div>
+            <div class="frames-strip" id="framesStrip">
+              <div class="empty-state-mini">Upload and analyze a video to see frames</div>
+            </div>
+          </div>
+
+          <button class="btn-amber btn-full" onclick="PanelApp.analyzeVideo()">🎬 Analyze Video</button>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="video-right">
+          <div class="card">
+            <div class="card-title">⚙️ Settings</div>
+            <div class="form-group">
+              <label class="form-label">Frame Selection</label>
+              <select class="form-select" id="videoFrameMode" onchange="PanelApp.onVideoFrameModeChange()">
+                <option value="auto" selected>Auto</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Manual Max Panels</label>
+              <select class="form-select" id="maxFrames" disabled>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6" selected>6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confidence: <strong id="videoConfVal">0.25</strong></label>
+              <input type="range" class="conf-slider" id="videoConfSlider"
+                     min="0.05" max="0.95" step="0.05" value="0.25"
+                     oninput="document.getElementById('videoConfVal').textContent=this.value"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">AI Model</label>
+              <div class="model-mini-selector" id="videoModelSelector">
+                <label class="model-mini selected"><input type="radio" name="vmodel" value="yolov26" checked/> ⚡ YOLOv26</label>
+                <label class="model-mini"><input type="radio" name="vmodel" value="frcnn"/> 🎯 FRCNN</label>
+                <label class="model-mini"><input type="radio" name="vmodel" value="ssd"/> 🛡️ SSD</label>
+                <label class="model-mini"><input type="radio" name="vmodel" value="yolov26_sahi"/> 🔬 YOLO+SAHI</label>
+                <label class="model-mini"><input type="radio" name="vmodel" value="auto"/> 🔮 Auto</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" id="videoSummaryCard">
+            <div class="card-title">📊 Video Summary</div>
+            <div id="videoSummaryBody" class="stats-grid">
+              <div class="stat-item"><span class="stat-label">Frames</span><span class="stat-val" id="vs-frames">—</span></div>
+              <div class="stat-item"><span class="stat-label">Panels</span><span class="stat-val" id="vs-panels">—</span></div>
+              <div class="stat-item"><span class="stat-label">Defects</span><span class="stat-val red" id="vs-defects">—</span></div>
+              <div class="stat-item"><span class="stat-label">Avg Health</span><span class="stat-val" id="vs-health">—</span></div>
+              <div class="stat-item"><span class="stat-label">Energy Lost</span><span class="stat-val amber" id="vs-energy">—</span></div>
+              <div class="stat-item"><span class="stat-label">Model</span><span class="stat-val" id="vs-model">—</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📟 Analysis Log</div>
+            <div class="log-terminal" id="videoLog">
+              <div class="log-line"><span class="log-time">--:--:--</span><span class="log-tag sys">[SYSTEM]</span><span class="log-msg"> Upload a video to begin analysis.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         PAGE: LIVE TELLO
+    ════════════════════════════════════════════ -->
+    <section class="page" id="page-tello">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">LIVE TELLO</div>
+          <h1 class="page-title">Live Drone Inspection</h1>
+        </div>
+        <div class="page-actions">
+          <div class="connection-badge" id="telloStatusBadge">● Disconnected</div>
+          <button class="btn-amber" id="btnConnectTello" onclick="Tello.connect()">🔌 Connect Tello</button>
+        </div>
+      </div>
+
+      <div class="tello-layout">
+        <!-- LEFT -->
+        <div class="tello-left">
+
+          <div class="card">
+            <div class="card-title">🔌 Connection</div>
+            <div class="tello-stats-grid">
+              <div class="tello-stat"><span class="ts-label">Status</span><span class="ts-val" id="t-status">● Disconnected</span></div>
+              <div class="tello-stat"><span class="ts-label">Battery</span><span class="ts-val" id="t-battery">—</span></div>
+              <div class="tello-stat"><span class="ts-label">Height</span><span class="ts-val" id="t-height">—</span></div>
+              <div class="tello-stat"><span class="ts-label">Temp</span><span class="ts-val" id="t-temp">—</span></div>
+              <div class="tello-stat"><span class="ts-label">Speed</span><span class="ts-val" id="t-speed">—</span></div>
+              <div class="tello-stat"><span class="ts-label">Flight Time</span><span class="ts-val" id="t-time">—</span></div>
+            </div>
+            <button class="btn-amber btn-full" id="btnConnectTello2" onclick="Tello.connect()" style="margin-top:.75rem">
+              🔌 Connect Tello
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🕹️ Flight Controls</div>
+            <div class="flight-controls">
+              <div class="fc-row">
+                <button class="fc-btn" onclick="Tello.cmd('forward 30')">↑ Forward</button>
+              </div>
+              <div class="fc-row">
+                <button class="fc-btn" onclick="Tello.cmd('left 30')">← Left</button>
+                <button class="fc-btn fc-land" onclick="Tello.cmd('land')">⬇ LAND</button>
+                <button class="fc-btn" onclick="Tello.cmd('right 30')">→ Right</button>
+              </div>
+              <div class="fc-row">
+                <button class="fc-btn" onclick="Tello.cmd('back 30')">↓ Back</button>
+              </div>
+              <div class="fc-row fc-row-extra">
+                <button class="fc-btn fc-takeoff" onclick="Tello.cmd('takeoff')">🚁 Takeoff</button>
+                <button class="fc-btn" onclick="Tello.cmd('up 30')">↑ Up</button>
+                <button class="fc-btn" onclick="Tello.cmd('down 30')">↓ Down</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🗺️ Auto-Mission</div>
+            <div class="mission-config">
+              <div class="form-group-inline">
+                <label>Rows</label>
+                <input type="number" class="form-input-sm" id="missionRows" value="3" min="1" max="10"/>
+              </div>
+              <div class="form-group-inline">
+                <label>Cols</label>
+                <input type="number" class="form-input-sm" id="missionCols" value="4" min="1" max="10"/>
+              </div>
+              <div class="form-group-inline">
+                <label>Alt (cm)</label>
+                <input type="number" class="form-input-sm" id="missionAlt" value="150" min="50" max="500"/>
+              </div>
+            </div>
+            <div class="mission-btns">
+              <button class="btn-amber" onclick="Tello.startMission()">▶ Start Mission</button>
+              <button class="btn-danger-sm" onclick="Tello.stopMission()">⛔ Stop</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📋 Mission Log</div>
+            <div class="log-terminal" id="telloLog">
+              <div class="log-line"><span class="log-time">--:--:--</span><span class="log-tag sys">[SYSTEM]</span><span class="log-msg"> Ready — connect drone to begin.</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT -->
+        <div class="tello-right">
+
+          <div class="card live-feed-card">
+            <div class="card-title">📺 Live Video Feed</div>
+            <div class="live-feed-wrap">
+              <canvas id="liveFeedCanvas" class="live-feed-canvas"></canvas>
+              <div class="live-feed-placeholder" id="liveFeedPlaceholder">
+                <img src="/static/assets/placeholder.svg" alt="drone"/>
+                <p>Connect Tello to start live feed</p>
+              </div>
+              <div class="live-overlay-badge" id="liveOverlayBadge" style="display:none">● LIVE</div>
+            </div>
+            <div class="feed-controls">
+              <label class="toggle-label">Bbox Overlay</label>
+              <button class="toggle-btn active" id="bboxToggleOn" onclick="Tello.setBbox(true)">ON</button>
+              <button class="toggle-btn" id="bboxToggleOff" onclick="Tello.setBbox(false)">OFF</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🔍 Live Detections</div>
+            <div id="liveDetectionsList" class="live-detections-list">
+              <div class="empty-state-mini">No live detections yet</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🤖 Model (Live)</div>
+            <div class="model-mini-selector" id="telloModelSelector">
+              <label class="model-mini selected"><input type="radio" name="tmodel" value="yolov26" checked/> ⚡ YOLOv26</label>
+              <label class="model-mini"><input type="radio" name="tmodel" value="frcnn"/> 🎯 FRCNN</label>
+              <label class="model-mini"><input type="radio" name="tmodel" value="ssd"/> 🛡️ SSD</label>
+              <label class="model-mini"><input type="radio" name="tmodel" value="yolov26_sahi"/> 🔬 YOLO+SAHI</label>
+              <label class="model-mini"><input type="radio" name="tmodel" value="auto"/> 🔮 Auto</label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🗺️ Mission Settings</div>
+            <div class="mission-config">
+              <div class="form-group-inline">
+                <label>Rows</label>
+                <input type="number" class="form-input-sm" id="missionRows2" value="3" min="1" max="10"/>
+              </div>
+              <div class="form-group-inline">
+                <label>Cols</label>
+                <input type="number" class="form-input-sm" id="missionCols2" value="4" min="1" max="10"/>
+              </div>
+              <div class="form-group-inline">
+                <label>Alt (cm)</label>
+                <input type="number" class="form-input-sm" id="missionAlt2" value="150" min="50" max="500"/>
+              </div>
+            </div>
+            <div class="mission-btns">
+              <button class="btn-amber" onclick="Tello.startMission()">▶ Start Mission</button>
+              <button class="btn-danger-sm" onclick="Tello.stopMission()">⛔ Abort</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── HISTORY BAR ───────────────────────────────────────── -->
+  <footer class="history-bar" id="historyBar">
+    <span class="history-label">History</span>
+    <div class="history-chips" id="historyChips">
+      <span class="history-empty">No inspections yet</span>
+    </div>
+  </footer>
+
+</div><!-- end shell -->
+
+<!-- Confirm reset modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header"><h3>⚠️ Confirm Reset</h3></div>
+    <div class="modal-body">
+      <p>This will delete all inspections, results, and work orders. Are you sure?</p>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" onclick="PanelApp.confirmReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/tello.js"></script>
+<script>
+  // activate correct tab from URL hash
+  (function(){
+    const hash = window.location.hash.replace('#','') || 'inspection';
+    const pages = ['inspection','video','tello'];
+    if(pages.includes(hash)){
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      const pg = document.getElementById('page-'+hash);
+      if(pg) pg.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n=>{
+        n.classList.toggle('active', n.dataset.page===hash);
+      });
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarVision — Schedule</title>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+<link rel="shortcut icon" href="/static/img/favicon.svg"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- INTEL BAR -->
+  <header class="intel-bar" id="intelBar">
+    <div class="intel-brand">
+      <img src="/static/img/logo.svg" alt="logo" class="intel-logo"/>
+      <span class="intel-title">SUNSIGHT</span>
+    </div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">☀️</span><span id="ib-weather">17°C Sydney</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">📉</span><span>Lost</span><span id="ib-lost" class="intel-val amber">0 Wh</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔴</span><span>Critical</span><span id="ib-critical" class="intel-val red">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🏥</span><span>Farm Health</span><span id="ib-health" class="intel-val green">—</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔍</span><span>Scans</span><span id="ib-scans" class="intel-val">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🕐</span><span>Last</span><span id="ib-last" class="intel-val">—</span></div>
+    <div class="intel-spacer"></div>
+    <div class="intel-sim-pill" id="simPill">SIM MODE</div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="logo" class="sidebar-logo"/>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">SolarVision</span>
+          <span class="sidebar-sub">AI Solar Intelligence Suite</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse">&#8592;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">NAVIGATION</div>
+      <a class="nav-item" href="/"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a class="nav-item" href="/panel#inspection"><span class="nav-icon">🔍</span><span class="nav-label">New Inspection</span></a>
+      <a class="nav-item" href="/panel#video"><span class="nav-icon">🎬</span><span class="nav-label">Drone Video</span></a>
+      <a class="nav-item" href="/panel#tello"><span class="nav-icon">🚁</span><span class="nav-label">Live Tello</span></a>
+      <a class="nav-item" href="/#results"><span class="nav-icon">📋</span><span class="nav-label">Results</span></a>
+      <a class="nav-item" href="/report"><span class="nav-icon">📄</span><span class="nav-label">Report</span></a>
+      <a class="nav-item" href="/#farm"><span class="nav-icon">🏘️</span><span class="nav-label">Farm Overview</span></a>
+      <a class="nav-item" href="/analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></a>
+      <a class="nav-item active" href="/schedule"><span class="nav-icon">📅</span><span class="nav-label">Schedule</span></a>
+      <a class="nav-item" href="/workorders"><span class="nav-icon">🔧</span><span class="nav-label">Work Orders</span></a>
+    </nav>
+    <div class="sidebar-session">
+      <div class="nav-section-label">SESSION</div>
+      <div class="session-row"><span>Inspections</span><span id="ss-inspections">0</span></div>
+      <div class="session-row"><span>Defects Found</span><span id="ss-defects">0</span></div>
+      <div class="session-row"><span>Panels Scanned</span><span id="ss-panels">0</span></div>
+      <div class="session-row"><span>Model</span><span id="ss-model" class="session-model-pill">YOLOv26</span></div>
+    </div>
+    <div class="sidebar-actions">
+      <div class="nav-section-label">ACTIONS</div>
+      <button class="action-btn" onclick="window.location='/api/export/csv'"><span>📥</span><span class="nav-label">Export CSV</span></button>
+      <button class="action-btn" onclick="window.location='/report'"><span>📄</span><span class="nav-label">Generate Report</span></button>
+      <button class="action-btn danger" onclick="SchedulePage.resetSession()"><span>🔄</span><span class="nav-label">Reset Session</span></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mainContent">
+    <section class="page active" id="page-schedule">
+
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">SCHEDULE</div>
+          <h1 class="page-title">Predictive Cleaning Schedule</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline" onclick="SchedulePage.refresh()">↻ Refresh</button>
+          <button class="btn-outline" onclick="AppPrint.printPage()">🖨️ Print</button>
+        </div>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon">📅</div>
+          <div class="kpi-label">Due This Week</div>
+          <div class="kpi-value red" id="sch-week">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-label">High Priority</div>
+          <div class="kpi-value red" id="sch-high">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🟡</div>
+          <div class="kpi-label">Medium Priority</div>
+          <div class="kpi-value amber" id="sch-med">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🟢</div>
+          <div class="kpi-label">Low Priority</div>
+          <div class="kpi-value green" id="sch-low">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🔲</div>
+          <div class="kpi-label">Panels Scheduled</div>
+          <div class="kpi-value" id="sch-total">0</div>
+        </div>
+      </div>
+
+      <!-- Filter + Search -->
+      <div class="table-toolbar">
+        <div class="filter-chips" id="scheduleFilters">
+          <button class="chip active" onclick="SchedulePage.filter('all',this)">All</button>
+          <button class="chip chip-red" onclick="SchedulePage.filter('High',this)">🔴 High</button>
+          <button class="chip chip-yellow" onclick="SchedulePage.filter('Medium',this)">🟡 Medium</button>
+          <button class="chip chip-green" onclick="SchedulePage.filter('Low',this)">🟢 Low</button>
+        </div>
+        <input type="text" class="search-input" id="scheduleSearch"
+               placeholder="🔍 Search panel ID or location…"
+               oninput="SchedulePage.search(this.value)"/>
+      </div>
+
+      <!-- Schedule Table -->
+      <div class="card">
+        <div class="card-title">
+          📅 Cleaning Schedule
+          <span class="badge" id="scheduleBadge">0</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="scheduleTable">
+            <thead>
+              <tr>
+                <th onclick="SchedulePage.sort('panel_id')">Panel ↕</th>
+                <th onclick="SchedulePage.sort('health')">Health ↕</th>
+                <th onclick="SchedulePage.sort('soiling')">Soiling % ↕</th>
+                <th onclick="SchedulePage.sort('energy_loss')">Energy Lost ↕</th>
+                <th onclick="SchedulePage.sort('priority')">Priority ↕</th>
+                <th onclick="SchedulePage.sort('clean_date')">Clean Date ↕</th>
+                <th onclick="SchedulePage.sort('days_until')">Days Until ↕</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleTableBody">
+              <tr>
+                <td colspan="8" class="table-empty">
+                  No schedule data — run inspections first
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Row 2: Timeline chart + Urgency donut -->
+      <div class="analytics-row-2" style="margin-top:1.25rem">
+        <div class="card">
+          <div class="card-title">
+            📆 Cleaning Timeline
+            <span class="card-subtitle">Days until clean per panel</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="scheduleTimelineChart"></canvas>
+          </div>
+          <div id="scheduleTimelineEmpty" class="chart-empty-state">
+            No schedule data yet
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            🚦 Urgency Distribution
+            <span class="card-subtitle">Panels by priority level</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="scheduleUrgencyChart"></canvas>
+          </div>
+          <div id="scheduleUrgencyEmpty" class="chart-empty-state">
+            No urgency data yet
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- HISTORY BAR -->
+  <footer class="history-bar" id="historyBar">
+    <span class="history-label">History</span>
+    <div class="history-chips" id="historyChips">
+      <span class="history-empty">No inspections yet</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Confirm reset modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header"><h3>⚠️ Confirm Reset</h3></div>
+    <div class="modal-body">
+      <p>This will delete all inspections and work orders.</p>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" onclick="SchedulePage.confirmReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof SchedulePage !== 'undefined') SchedulePage.init();
+  });
+</script>
+</body>
+</html>

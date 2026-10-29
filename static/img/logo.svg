@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SolarVision">
+  <defs>
+    <linearGradient id="sun" x1="12" y1="8" x2="48" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbbf24"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="18" y1="30" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#111827"/>
+  <circle cx="22" cy="20" r="10" fill="url(#sun)"/>
+  <g stroke="#fbbf24" stroke-width="3" stroke-linecap="round">
+    <path d="M22 5v5"/>
+    <path d="M22 30v5"/>
+    <path d="M7 20h5"/>
+    <path d="M32 20h5"/>
+    <path d="m11 9 4 4"/>
+    <path d="m33 31-4-4"/>
+    <path d="m33 9-4 4"/>
+    <path d="m11 31 4-4"/>
+  </g>
+  <path d="M19 35h31l5 16H13z" fill="url(#panel)" stroke="#93c5fd" stroke-width="2" stroke-linejoin="round"/>
+  <g stroke="#bfdbfe" stroke-width="1.4" opacity=".9">
+    <path d="M23 35l-4 16"/>
+    <path d="M34 35v16"/>
+    <path d="M45 35l4 16"/>
+    <path d="M16 43h37"/>
+  </g>
+  <path d="M46 12l2.4 5.2L54 19.6l-5.6 2.2L46 27l-2.4-5.2L38 19.6l5.6-2.4z" fill="#22c55e"/>
+</svg>

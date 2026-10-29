@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SolarVision — Work Orders</title>
+<link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg"/>
+<link rel="shortcut icon" href="/static/img/favicon.svg"/>
+<link rel="stylesheet" href="/static/css/style.css"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="shell">
+
+  <!-- INTEL BAR -->
+  <header class="intel-bar" id="intelBar">
+    <div class="intel-brand">
+      <img src="/static/img/logo.svg" alt="logo" class="intel-logo"/>
+      <span class="intel-title">SUNSIGHT</span>
+    </div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">☀️</span><span id="ib-weather">17°C Sydney</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">📉</span><span>Lost</span><span id="ib-lost" class="intel-val amber">0 Wh</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔴</span><span>Critical</span><span id="ib-critical" class="intel-val red">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🏥</span><span>Farm Health</span><span id="ib-health" class="intel-val green">—</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🔍</span><span>Scans</span><span id="ib-scans" class="intel-val">0</span></div>
+    <div class="intel-divider"></div>
+    <div class="intel-stat"><span class="intel-icon">🕐</span><span>Last</span><span id="ib-last" class="intel-val">—</span></div>
+    <div class="intel-spacer"></div>
+    <div class="intel-sim-pill" id="simPill">SIM MODE</div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <img src="/static/img/logo.svg" alt="logo" class="sidebar-logo"/>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-name">SolarVision</span>
+          <span class="sidebar-sub">AI Solar Intelligence Suite</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse">&#8592;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">NAVIGATION</div>
+      <a class="nav-item" href="/"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+      <a class="nav-item" href="/panel#inspection"><span class="nav-icon">🔍</span><span class="nav-label">New Inspection</span></a>
+      <a class="nav-item" href="/panel#video"><span class="nav-icon">🎬</span><span class="nav-label">Drone Video</span></a>
+      <a class="nav-item" href="/panel#tello"><span class="nav-icon">🚁</span><span class="nav-label">Live Tello</span></a>
+      <a class="nav-item" href="/#results"><span class="nav-icon">📋</span><span class="nav-label">Results</span></a>
+      <a class="nav-item" href="/report"><span class="nav-icon">📄</span><span class="nav-label">Report</span></a>
+      <a class="nav-item" href="/#farm"><span class="nav-icon">🏘️</span><span class="nav-label">Farm Overview</span></a>
+      <a class="nav-item" href="/analytics"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></a>
+      <a class="nav-item" href="/schedule"><span class="nav-icon">📅</span><span class="nav-label">Schedule</span></a>
+      <a class="nav-item active" href="/workorders"><span class="nav-icon">🔧</span><span class="nav-label">Work Orders</span></a>
+    </nav>
+    <div class="sidebar-session">
+      <div class="nav-section-label">SESSION</div>
+      <div class="session-row"><span>Inspections</span><span id="ss-inspections">0</span></div>
+      <div class="session-row"><span>Defects Found</span><span id="ss-defects">0</span></div>
+      <div class="session-row"><span>Panels Scanned</span><span id="ss-panels">0</span></div>
+      <div class="session-row"><span>Model</span><span id="ss-model" class="session-model-pill">YOLOv26</span></div>
+    </div>
+    <div class="sidebar-actions">
+      <div class="nav-section-label">ACTIONS</div>
+      <button class="action-btn" onclick="window.location='/api/export/csv'"><span>📥</span><span class="nav-label">Export CSV</span></button>
+      <button class="action-btn" onclick="window.location='/report'"><span>📄</span><span class="nav-label">Generate Report</span></button>
+      <button class="action-btn danger" onclick="WorkOrdersPage.resetSession()"><span>🔄</span><span class="nav-label">Reset Session</span></button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content" id="mainContent">
+    <section class="page active" id="page-workorders">
+
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">WORK ORDERS</div>
+          <h1 class="page-title">Maintenance Work Orders</h1>
+        </div>
+        <div class="page-actions">
+          <button class="btn-outline" onclick="WorkOrdersPage.refresh()">↻ Refresh</button>
+          <button class="btn-outline" onclick="WorkOrdersPage.exportCSV()">📥 Export</button>
+          <button class="btn-outline" onclick="AppPrint.printPage()">🖨️ Print</button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-label">Total Orders</div>
+          <div class="kpi-value" id="wo-total">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-label">Open Critical</div>
+          <div class="kpi-value red" id="wo-critical">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">🟠</div>
+          <div class="kpi-label">Open High</div>
+          <div class="kpi-value" style="color:#f97316" id="wo-high">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-label">Completed</div>
+          <div class="kpi-value green" id="wo-completed">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-label">Open</div>
+          <div class="kpi-value amber" id="wo-open">0</div>
+        </div>
+      </div>
+
+      <!-- Filter + Search toolbar -->
+      <div class="table-toolbar">
+        <div class="filter-chips">
+          <button class="chip active" onclick="WorkOrdersPage.filter('all',this)">All</button>
+          <button class="chip chip-red" onclick="WorkOrdersPage.filter('Critical',this)">🔴 Critical</button>
+          <button class="chip chip-orange" onclick="WorkOrdersPage.filter('High',this)">🟠 High</button>
+          <button class="chip chip-yellow" onclick="WorkOrdersPage.filter('Medium',this)">🟡 Medium</button>
+          <button class="chip chip-green" onclick="WorkOrdersPage.filter('Low',this)">🟢 Low</button>
+          <button class="chip" onclick="WorkOrdersPage.filter('Open',this)">⏳ Open</button>
+          <button class="chip" onclick="WorkOrdersPage.filter('Completed',this)">✅ Completed</button>
+        </div>
+        <input type="text" class="search-input" id="woSearch"
+               placeholder="🔍 Search WO ID, panel, issue…"
+               oninput="WorkOrdersPage.search(this.value)"/>
+      </div>
+
+      <!-- Work Orders Table -->
+      <div class="card">
+        <div class="card-title">
+          🔧 Work Orders
+          <span class="badge" id="woBadge">0</span>
+          <button class="btn-outline btn-sm" style="margin-left:auto"
+                  onclick="WorkOrdersPage.markAllDone()">✅ Mark All Done</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="woTable">
+            <thead>
+              <tr>
+                <th onclick="WorkOrdersPage.sort('wo_id')">WO ID ↕</th>
+                <th onclick="WorkOrdersPage.sort('panel_id')">Panel ↕</th>
+                <th onclick="WorkOrdersPage.sort('issue')">Issue ↕</th>
+                <th onclick="WorkOrdersPage.sort('priority')">Priority ↕</th>
+                <th onclick="WorkOrdersPage.sort('status')">Status ↕</th>
+                <th onclick="WorkOrdersPage.sort('created_at')">Created ↕</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="woTableBody">
+              <tr>
+                <td colspan="7" class="table-empty">
+                  No work orders yet — run inspections to generate them automatically
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Row 2: Status chart + Issue breakdown -->
+      <div class="analytics-row-2" style="margin-top:1.25rem">
+        <div class="card">
+          <div class="card-title">
+            📊 Status Overview
+            <span class="card-subtitle">Open vs completed work orders</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="woStatusChart"></canvas>
+          </div>
+          <div id="woStatusEmpty" class="chart-empty-state">No work order data yet</div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            🔎 Issue Breakdown
+            <span class="card-subtitle">Work orders by defect type</span>
+          </div>
+          <div class="chart-wrap-md">
+            <canvas id="woIssueChart"></canvas>
+          </div>
+          <div id="woIssueEmpty" class="chart-empty-state">No issue data yet</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- HISTORY BAR -->
+  <footer class="history-bar" id="historyBar">
+    <span class="history-label">History</span>
+    <div class="history-chips" id="historyChips">
+      <span class="history-empty">No inspections yet</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- Confirm reset modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal-box modal-box-sm">
+    <div class="modal-header"><h3>⚠️ Confirm Reset</h3></div>
+    <div class="modal-body">
+      <p>This will delete all inspections and work orders.</p>
+      <div class="modal-footer">
+        <button class="btn-outline" onclick="document.getElementById('confirmModal').style.display='none'">Cancel</button>
+        <button class="btn-danger" onclick="WorkOrdersPage.confirmReset()">Reset All</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+<script src="/static/js/charts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof WorkOrdersPage !== 'undefined') WorkOrdersPage.init();
+  });
+</script>
+</body>
+</html>
