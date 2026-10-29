@@ -14,7 +14,7 @@ python app.py
 
 Open http://127.0.0.1:5000. The lightweight installation supports the explicitly labelled simulation workflow. Simulated defects and energy/ROI estimates are illustrative, not measured engineering results.
 
-For real image inference, install `requirements-inference.txt`, then run `python scripts/download_models.py`. The project's checkpoints are distributed as checksum-verified GitHub Release assets rather than large Git files. The SAHI branch reuses the YOLO detector with sliced inference. Missing weights produce an error when real inference is requested; they do not silently turn into simulated results.
+For real image inference, install `requirements-inference.txt` and provide compatible trained checkpoints at the paths in `model-manifest.json`. The original project checkpoints have been tested locally but are not included in this public release. See [model availability](docs/MODELS.md). The download helper can verify future release assets when they become available. The SAHI branch reuses the YOLO detector with sliced inference. Missing weights produce an error when real inference is requested; they do not silently turn into simulated results.
 
 ## Features
 
